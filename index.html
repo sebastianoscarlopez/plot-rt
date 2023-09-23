@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebGL</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="helpers/shader-helper.js"></script>
+    <script src="helpers/geometries.js"></script>
+    <script src="gl/init.js"></script>
+    <script src="gl/buffer.js"></script>
+    <script src="render/draw-basic.js"></script>
+    <script src="programs/basic.js"></script>
+
+    <script>
+      document.addEventListener('readystatechange', (event) => {
+        if (document.readyState !== 'complete') return;
+
+        const canvas = document.getElementById('canvas_main');
+        const gl = init(canvas);
+
+        const vertexBuffer = new Buffer({
+          type: gl.ARRAY_BUFFER,
+          usage: gl.DYNAMIC_DRAW,
+        });
+
+        const indexBuffer = new Buffer({
+          type: gl.ELEMENT_ARRAY_BUFFER,
+          usage: gl.STATIC_DRAW,
+        });
+
+        const uniformBuffer = new Buffer({
+          type: gl.GL_UNIFORM_BUFFER,
+          usage: gl.STATIC_DRAW,
+        });
+
+        const MAX_VERTICES = 100;
+        vertexBuffer.bufferData(4 * MAX_VERTICES * 3);
+        indexBuffer.bufferData(2 * MAX_VERTICES);
+
+        getBasicProgram().then((glProgram) => {
+          gl.useProgram(glProgram);
+
+          const coordinates = gl.getAttribLocation(glProgram, 'coordinates');
+          gl.vertexAttribPointer(coordinates, 3, gl.FLOAT, false, 0, 0);
+          gl.enableVertexAttribArray(coordinates);
+
+          var u_color = gl.getUniformLocation(glProgram, "u_color");
+
+          gl.uniform3fv(u_color, [1, 1, 0]);          
+          drawTriangle();
+
+          gl.uniform3fv(u_color, [1, 0, 0]);
+          drawSquare();
+
+          gl.uniform3fv(u_color, [1, 0, 1]);
+          drawCircle();
+
+          function drawCircle() {
+            const geometry = getPolygonGeometry({ steps: 30 });
+
+            vertexBuffer.bufferSubData(0, geometry.vertices);
+            indexBuffer.bufferSubData(0, geometry.indices);
+
+            gl.drawElements(
+              gl.TRIANGLE_STRIP,
+              geometry.indices.length,
+              gl.UNSIGNED_SHORT,
+              0
+            );
+          }
+          function drawTriangle() {
+            const geometry = getTriangleGeometry();
+            vertexBuffer.bufferSubData(0, geometry.vertices);
+            indexBuffer.bufferSubData(0, geometry.indices);
+
+            gl.drawElements(
+              gl.TRIANGLE_STRIP,
+              geometry.indices.length,
+              gl.UNSIGNED_SHORT,
+              0
+            );
+          }
+          function drawSquare() {
+            const geometry = getSquareGeometry();
+            vertexBuffer.bufferSubData(0, geometry.vertices);
+            indexBuffer.bufferSubData(0, geometry.indices);
+
+            gl.drawElements(
+              gl.TRIANGLE_STRIP,
+              geometry.indices.length,
+              gl.UNSIGNED_SHORT,
+              0
+            );
+          }
+        });
+      });
+
+    </script>
+  </head>
+
+  <body>
+    <canvas id="canvas_main"></canvas>
+  </body>
+</html>
